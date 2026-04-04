@@ -5,7 +5,7 @@ response = ollama.chat(
     model=MODELNAME,
     stream=True,
     messages=[
-        {"role": "user", "content": "What time is it in Taipei?"}
+        {"role": "user", "content": "臺北的捷運有哪些線?"}
     ],
 )
 
