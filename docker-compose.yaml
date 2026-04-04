@@ -1,0 +1,22 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ytp-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama # Ollama Models and configs will be stored here
+    environment:
+      - OLLAMA_HOST=0.0.0.0 # Allow Ollama to listen on host network
+    entrypoint:
+    # Start Ollama and Download Model
+      [
+        "/bin/sh",
+        "-c",
+        "ollama serve & sleep 5 && ollama pull llama3.1 && tail -f /dev/null",
+      ]
+    restart: unless-stopped
+
+
+volumes:
+  ollama_data:
