@@ -1,22 +1,23 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: ytp-ollama
+    container_name: ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama # Ollama Models and configs will be stored here
+      - ./:/workspace
+    working_dir: /workspace
     environment:
       - OLLAMA_HOST=0.0.0.0 # Allow Ollama to listen on host network
     entrypoint:
-    # Start Ollama and Download Model
+      # Start Ollama and create model from local Modelfile
       [
         "/bin/sh",
         "-c",
-        "ollama serve & sleep 5 && ollama pull llama3.1 && tail -f /dev/null",
+        "ollama serve & sleep 5 && ollama create TAIDE-LLAMA3.1 -f ./Modelfile && tail -f /dev/null",
       ]
     restart: unless-stopped
-
 
 volumes:
   ollama_data:
