@@ -1,6 +1,17 @@
-import ollama
+from openai import OpenAI
 import datetime
+import os
+from dotenv import load_dotenv
 from CONST import MODELNAME
+
+# Load environment variables
+load_dotenv()
+
+# Initialize OpenAI client
+client = OpenAI(
+    base_url=os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1"),
+    api_key=os.getenv("OPENAI_API_KEY", "ollama")
+)
 
 def get_taipei_time():
     print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -21,7 +32,7 @@ TOOLS = [
     }
 ]
 
-first = ollama.chat(
+first = client.chat.completions.create(
     model=MODELNAME,
     messages=[
         {"role": "user", "content": "臺北現在幾點?"}
@@ -29,19 +40,22 @@ first = ollama.chat(
     tools=TOOLS,
 )
 
-if first.message.tool_calls:
-    tool_call = first.message.tool_calls[0]
+print(first.choices[0].message)
+
+if first.choices[0].message.tool_calls:
+    tool_call = first.choices[0].message.tool_calls[0]
     if tool_call.function.name == 'get_taipei_time':
         taipei_time = get_taipei_time()
         messages = [
             {"role": "user", "content": "臺北現在幾點?"},
-            {"role": "tool", "tool_name": "get_taipei_time", "content": taipei_time},
+            {"role": "assistant", "content": "", "tool_calls": [tool_call]},
+            {"role": "tool", "tool_call_id": tool_call.id, "content": taipei_time},
         ]
 
-        second = ollama.chat(
+        second = client.chat.completions.create(
             model=MODELNAME,
             messages=messages,
             tools=TOOLS,
         )
 
-        print(second.message.content)
+        print(second.choices[0].message.content)
