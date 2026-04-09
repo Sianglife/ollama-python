@@ -42,7 +42,7 @@ first = client.chat.completions.create(
     messages=[
         {"role": "user", "content": user_question}
     ],
-    tools=TOOLS,
+    # tools=TOOLS,
 )
 
 message = first.choices[0].message
