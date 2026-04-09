@@ -1,48 +1,25 @@
 FROM ./Gemma-3-TAIDE-12b-Chat-2602-Q4_K_M.gguf
 
-SYSTEM """你是臺北市觀光與地理位置的 AI 導遊，請使用繁體中文(臺灣)或使用者詢問之語言回答，如為中文請預設為中文(臺灣)而非簡體中文，嚴禁使用簡體中文，一律使用「臺」而非「台」。
-但注意：所有的系統標籤 [TOOL] 與 [TEXT] 屬於程式指令，**必須保持英文原樣**，嚴禁翻譯為其他語言。
+SYSTEM """
+你是臺北市觀光導遊，擅長調度各種工具與提供使用者建議。
+請遵循以下輸出規則：
+- 若需呼叫工具，僅輸出 [TOOL] 後接 JSON。JSON 格式為 {"name": "工具名稱", "parameters": {...}}。
+- 若為直接回答，僅輸出 [TEXT] 後接自然語言內容。
+- 預設語言為繁體中文臺灣，使用繁體中文時嚴禁使用簡體中文。使用者詢問其他語言時，請使用該語言回答。
+- 標籤 [TOOL] 與 [TEXT] 為程式關鍵字，嚴禁變更或翻譯。
+"""
 
-## 輸出規則：
-1. **一般對話模式**：當使用者的問題不需要外部資訊（如問候、一般知識）時，請直接以自然語言回答使用者。
-2. **工具呼叫模式**：當你判斷需要呼叫工具（如查詢即時時間、天氣、景點資料）時：
-   - **嚴禁**輸出任何開場白、結語或 Markdown 代碼塊（不要寫 ```json）。
-   - **僅限**輸出一個合法的 JSON 物件，格式如下：
-     {"name": "function_name", "parameters": {"arg": "value"}}
-
-## 注意：
-- 絕對不要在輸出 JSON 的同時又輸出自然語言。
-- 判斷基準：如果問題涉及即時數據（時間、氣象、交通），一律先進入工具呼叫模式。"""
-
-TEMPLATE """{{- if or .System .Tools }}<|start_header_id|>system<|end_header_id|>
-{{- if .System }}{{ .System }}{{- end }}
-{{- if .Tools }}
-You are a helpful assistant with tool calling capabilities.
-When you need to call a function, respond ONLY with the JSON object prefixed with [TOOL].
-When you answer the user directly, prefix your response with [TEXT].
-{{- end }}<|eot_id|>
-{{- end }}
-{{- range $i, $_ := .Messages }}
-{{- $last := eq (len (slice $.Messages $i)) 1 }}
-{{- if eq .Role "user" }}<|start_header_id|>user<|end_header_id|>
-{{- if and $.Tools $last }}
-Given the functions below, respond with a JSON object prefixed with [TOOL] to answer the prompt.
-{{ range $.Tools }}{{ . }}{{ end }}
-Question: {{ .Content }}<|eot_id|>
-{{- else }}
-{{ .Content }}<|eot_id|>
-{{- end }}{{ if $last }}<|start_header_id|>assistant<|end_header_id|>
-{{- end }}
-{{- else if eq .Role "assistant" }}<|start_header_id|>assistant<|end_header_id|>
-{{- if .ToolCalls }}[TOOL]
-{{- range .ToolCalls }}{"name": "{{ .Function.Name }}", "parameters": {{ .Function.Arguments }}}{{ end }}
+TEMPLATE """
+{{- if .System }}<|start_header_id|>system<|end_header_id|>{{ .System }}<|eot_id|>{{- end }}
+{{- range .Messages }}
+...
+{{- if eq .Role "assistant" }}<|start_header_id|>assistant<|end_header_id|>
+{{- if .ToolCalls }}[TOOL]{{ range .ToolCalls }}{"name": "{{ .Function.Name }}", "parameters": {{ .Function.Arguments }}}{{ end }}
 {{- else }}[TEXT]{{ .Content }}
 {{- end }}{{ if not $last }}<|eot_id|>{{ end }}
-{{- else if eq .Role "tool" }}<|start_header_id|>call<|end_header_id|>
-{{ .Content }}<|eot_id|>{{ if $last }}<|start_header_id|>assistant<|end_header_id|>[TEXT]
+...
 {{- end }}
-{{- end }}
-{{- end }}"""
+"""
 
 PARAMETER stop <end_of_turn>
 PARAMETER temperature 1.0
