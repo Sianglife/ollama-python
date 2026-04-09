@@ -33,7 +33,7 @@ TOOLS = [
     }
 ]
 
-logger.info("=== First Chat START ===")
+logger.info("=== Chat START ===")
 
 user_question = "臺北現在幾點?"
 
@@ -47,7 +47,7 @@ first = client.chat.completions.create(
 
 message = first.choices[0].message
 content = (message.content or "").strip()
-logger.info("第一輪回應內容: {}", content)
+logger.info("第一輪回應 message: {}", message)
 
 if content.startswith("[TOOL]"):
     tool_payload = content[len("[TOOL]"):].strip()
@@ -115,8 +115,9 @@ if content.startswith("[TOOL]"):
         tools=TOOLS,
     )
 
+    second_message = second.choices[0].message
     second_content = (second.choices[0].message.content or "").strip()
-    logger.info("第二輪回應內容: {}", second_content)
+    logger.info("第二輪回應 message: {}", second_message)
 
     if second_content.startswith("[TEXT]"):
         print(second_content[len("[TEXT]"):].strip())
