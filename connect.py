@@ -1,7 +1,13 @@
-import ollama
-from CONST import MODELNAME
+from openai import OpenAI
+from CONST import IP, MODELNAME
 
-response = ollama.chat(
+
+client = OpenAI(
+    base_url=f"http://{IP}:11434/v1",
+    api_key="ollama"
+)
+
+response = client.chat.completions.create(
     model=MODELNAME,
     stream=True,
     messages=[
@@ -10,4 +16,4 @@ response = ollama.chat(
 )
 
 for message in response:
-    print(message['message']['content'], end='', flush=True)
+    print(message.choices[0].delta.content, end='', flush=True)
