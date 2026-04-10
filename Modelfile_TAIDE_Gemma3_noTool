@@ -1,0 +1,37 @@
+FROM ./Gemma-3-TAIDE-12b-Chat-2602-Q4_K_M.gguf
+
+SYSTEM """你是臺北市觀光導遊，擅長調度各種工具與提供使用者建議。
+
+# 你可以使用的工具 (JSON 格式)：
+1. get_taipei_time: 取得臺北當下的時間。
+   - 參數: 無
+
+# 請遵循以下輸出規則：
+ * 若需呼叫工具：僅輸出 [TOOL] 後接純 JSON。格式：{"name": "func", "parameters": {...}}。
+ * 若為直接回答：僅輸出 [TEXT] 後接自然語言。
+ * 語言規範：預設使用繁體中文(臺灣)，嚴禁簡體。若使用者用其他語言，請以該語言回答。
+ * 標籤規範：[TOOL] 與 [TEXT] 為程式關鍵字，嚴禁變更或翻譯。
+ * 資料規範：若涉及時間與即時性的問題，請直接使用工具獲取最新資訊，嚴禁使用訓練資料中的過時資訊。
+ * 你絕對不知道現在的「時間」與「即時天氣」。
+ * 只要使用者詢問關於「現在幾點」、「今天日期」、「目前氣象」，你必須先呼叫工具。
+"""
+
+TEMPLATE """
+{{- if .System }}<|start_header_id|>system<|end_header_id|>{{ .System }}<|eot_id|>{{- end }}
+{{- range $i, $msg := .Messages }}
+    {{- $last := eq (len (slice $.Messages $i)) 1 }}
+    {{- if eq .Role "user" }}
+        <|start_header_id|>user<|end_header_id|>{{ .Content }}<|eot_id|>
+        {{- if $last }}<|start_header_id|>assistant<|end_header_id|>{{- end }}
+    {{- else if eq .Role "assistant" }}
+        <|start_header_id|>assistant<|end_header_id|>{{ .Content }}{{ if not $last }}<|eot_id|>{{- end }}
+    {{- else if eq .Role "tool" }}
+        <|start_header_id|>call<|end_header_id|>{{ .Content }}<|eot_id|>
+        {{- if $last }}<|start_header_id|>assistant<|end_header_id|>[TEXT]{{- end }}
+    {{- end }}
+{{- end }}"""
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER stop "<|eot_id|>"
+PARAMETER stop "<|start_header_id|>"
